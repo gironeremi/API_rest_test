@@ -1,0 +1,49 @@
+<?php
+// Headers requis
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: PUT");
+header("Access-Control-Max-Age: 3600");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+// On vérifie la méthode
+if($_SERVER['REQUEST_METHOD'] == 'PUT'){
+    // On inclut les fichiers de configuration et d'accès aux données
+    include_once '../config/Database.php';
+    include_once '../models/Players.php';
+
+    // On instancie la base de données
+    $database = new Database();
+    $db = $database->getConnection();
+
+    // On instancie les joueurs
+    $player = new Players($db);
+
+    // On récupère les informations envoyées
+    $data = json_decode(file_get_contents("php://input"));
+    
+    if(!empty($data->id) && !empty($data->name) && !empty($data->age) && !empty($data->city)){
+        // Ici on a reçu les données
+        // On hydrate notre objet
+        $player->id = $data->id;
+        $player->name = $data->name;
+        $player->age = $data->age;
+        $player->city = $data->city;
+
+        if($player->update()){
+            // Ici la modification a fonctionné
+            // On envoie un code 200
+            http_response_code(200);
+            echo json_encode(["message" => "La modification a été effectuée"]);
+        }else{
+            // Ici la création n'a pas fonctionné
+            // On envoie un code 503
+            http_response_code(503);
+            echo json_encode(["message" => "La modification n'a pas été effectuée"]);         
+        }
+    }
+}else{
+    // On gère l'erreur
+    http_response_code(405);
+    echo json_encode(["message" => "La méthode n'est pas autorisée"]);
+}
